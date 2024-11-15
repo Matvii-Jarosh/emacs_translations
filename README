@@ -1,0 +1,5 @@
+This is a small GNU Emacs extension written in elisp that allows you to translate user data and comments in files, works well for translating comments inside /* */ // ;; structures, if there is "/*" then an error will occur, this is your problem, it is important to me that it performs the main function.
+
+To install, simply autoload the translastions.el file via load-file inside .emacs, or compile it and do the same
+
+License: GNU Lesser General Public License 3
