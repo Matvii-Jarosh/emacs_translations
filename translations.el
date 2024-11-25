@@ -13,8 +13,10 @@
 (require 'url)
 
 (defun translate-text (from_lang to_lang str)
+  "Function from translate text"
   (interactive)
   (let* ((url-request-method "GET")
+	 ;; IF SERVER NOT WORK CHANGE https://lingva-translate-eta.vercel.app TO OTHER LINGVA SERVER
          (url (format "https://lingva-translate-eta.vercel.app/api/v1/%s/%s/%s"
                       from_lang
                       to_lang
@@ -28,53 +30,57 @@
              (json (json-read-from-string (decode-coding-string (buffer-substring (point) (point-max)) 'utf-8)))
              (translation (gethash "translation" json)))
         (kill-buffer buffer)
+	;; change '+' to spaces
         (replace-regexp-in-string "+" " " translation)))))
 
 (defun get-text-between-symboles (from-lan to-lan)
-    (save-excursion
-        (let* ((start-comment-str "/*")
-               (end-comment-str "*/")
-               (start-comment 0)
-               (end-comment 0)
-               (comment-str ""))
-            (goto-char (point-min))
-            (catch 'loop
-                (while t
-                    (unless (search-forward start-comment-str nil t)
-                        (throw 'loop nil))
-                    (setq start-comment (point))                    
-                    (search-forward end-comment-str) 
-                    (setq end-comment (- (point) (length end-comment-str)))
-                    (unless (setq comment-str (delete-and-extract-region start-comment end-comment))
-                        (throw 'loop nil))                    
-                    (goto-char start-comment)
-                    (insert (translate-text from-lan to-lan comment-str)))))
-        (let* ((start-comment-str (list "//" "##" ";;"))
-               (current-start-comment-str "")
-               (start-comment 0)
-               (end-comment 0)
-               (comment-str "")
-               (i 0))       
-            (while (< i (length start-comment-str))
-                (setq current-start-comment-str (nth i start-comment-str))
-                (message current-start-comment-str)
-                (goto-char (point-min))
-                (catch 'loop
-                    (while t
-                        (unless (search-forward current-start-comment-str nil t)
-                            (throw 'loop nil))
-                        (setq start-comment (point))   
-                        (setq end-comment (line-end-position))
-                        (unless (setq comment-str (delete-and-extract-region start-comment end-comment))
-                            (throw 'loop nil))                        
-                        (goto-char start-comment)
-                        (insert (translate-text from-lan to-lan comment-str))))
-                (setq i (+ i 1))))))
+  "get text from comments"
+  (save-excursion
+    ;; get block comments
+    (let* ((start-comment-str "/*")
+           (end-comment-str "*/")
+           (start-comment 0)
+           (end-comment 0)
+           (comment-str ""))
+      (goto-char (point-min))
+      (catch 'loop
+        (while t
+          (unless (search-forward start-comment-str nil t)
+            (throw 'loop nil))
+          (setq start-comment (point))                    
+          (search-forward end-comment-str) 
+          (setq end-comment (- (point) (length end-comment-str)))
+          (unless (setq comment-str (delete-and-extract-region start-comment end-comment))
+            (throw 'loop nil))                    
+          (goto-char start-comment)
+          (insert (translate-text from-lan to-lan comment-str)))))
+    ;; get line comments
+    (let* ((start-comment-str (list "//" "##" ";;"))
+           (current-start-comment-str "")
+           (start-comment 0)
+           (end-comment 0)
+           (comment-str "")
+           (i 0))       
+      (while (< i (length start-comment-str))
+        (setq current-start-comment-str (nth i start-comment-str))
+        (message current-start-comment-str)
+        (goto-char (point-min))
+        (catch 'loop
+          (while t
+            (unless (search-forward current-start-comment-str nil t)
+              (throw 'loop nil))
+            (setq start-comment (point))   
+            (setq end-comment (line-end-position))
+            (unless (setq comment-str (delete-and-extract-region start-comment end-comment))
+              (throw 'loop nil))                        
+            (goto-char start-comment)
+            (insert (translate-text from-lan to-lan comment-str))))
+        (setq i (+ i 1))))))
 
 (defun tr-lan2lan (from-lan to-lan)
-    (let ((source-line (read-string "Enter: " nil))
-          (tr-line ""))
-        (message (translate-text from-lan to-lan source-line))))
+  (let ((source-line (read-string "Enter: " nil))
+        (tr-line ""))
+    (message (translate-text from-lan to-lan source-line))))
 
 ;;(defun tr-en2ru () (interactive) (tr-lan2lan "en" "ru"))
 ;;(defun tr-f-en2ru () (interactive) (get-text-between-symboles "en" "ru"))
